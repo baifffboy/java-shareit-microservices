@@ -14,6 +14,8 @@ import ru.practicum.shareit.user.model.User;
 @Mapper(componentModel = "spring", uses = CommentMapper.class, nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface ItemMapper {
 
+    @Mapping(target = "lastBooking", source = "lastBooking")
+    @Mapping(target = "nextBooking", source = "nextBooking")
     OwnerItemDto toDtoOwner(Item item);
 
     ItemDto toDto(Item item);
