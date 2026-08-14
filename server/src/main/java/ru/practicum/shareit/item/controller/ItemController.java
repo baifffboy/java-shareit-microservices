@@ -51,11 +51,13 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ResponseEntity<OwnerItemDto> getItem(@PathVariable Long itemId) {
-        log.info("Отправлен запрос на получение вещи с id: {}", itemId);
+    public ResponseEntity<OwnerItemDto> getItem(
+            @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId,
+            @PathVariable Long itemId) {
+        log.info("Отправлен запрос на получение вещи с id: {} от пользователя с id: {}", itemId, userId);
         return ResponseEntity
                 .ok()
-                .body(itemService.findById(itemId));
+                .body(itemService.findById(itemId, userId));
     }
 
     @GetMapping

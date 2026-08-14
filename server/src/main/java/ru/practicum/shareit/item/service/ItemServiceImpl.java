@@ -104,25 +104,28 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public OwnerItemDto findById(Long id) {
+    public OwnerItemDto findById(Long id, Long userId) {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Вещь с id " + id + " не найдена"));
 
-        bookingRepository.findFirstByItem_IdAndStatusAndEndBeforeOrderByEndDesc(
-                id,
-                Status.APPROVED,
-                LocalDateTime.now()
-        ).ifPresent(lastBooking -> item.setLastBooking(lastBooking.getEnd()));
+        // Только если запрос от владельца - заполняем lastBooking и nextBooking
+        if (item.getOwner().getId().equals(userId)) {
+            bookingRepository.findFirstByItem_IdAndStatusAndEndBeforeOrderByEndDesc(
+                    id,
+                    Status.APPROVED,
+                    LocalDateTime.now()
+            ).ifPresent(lastBooking -> item.setLastBooking(lastBooking.getEnd()));
 
-        bookingRepository.findFirstByItem_IdAndStatusAndStartAfterOrderByStartAsc(
-                id,
-                Status.APPROVED,
-                LocalDateTime.now()
-        ).ifPresent(nextBooking -> {
-            if (nextBooking.getStart().isAfter(LocalDateTime.now())) {
-                item.setNextBooking(nextBooking.getStart());
-            }
-        });
+            bookingRepository.findFirstByItem_IdAndStatusAndStartAfterOrderByStartAsc(
+                    id,
+                    Status.APPROVED,
+                    LocalDateTime.now()
+            ).ifPresent(nextBooking -> {
+                if (nextBooking.getStart().isAfter(LocalDateTime.now())) {
+                    item.setNextBooking(nextBooking.getStart());
+                }
+            });
+        }
 
         return itemMapper.toDtoOwner(item);
     }
@@ -141,17 +144,15 @@ public class ItemServiceImpl implements ItemService {
                             LocalDateTime.now()
                     ).ifPresent(lastBooking -> item.setLastBooking(lastBooking.getEnd()));
 
-                    List<Booking> futureBookings = bookingRepository.findAllByItem_IdAndStatusAndStartAfterOrderByStartAsc(
+                    bookingRepository.findFirstByItem_IdAndStatusAndStartAfterOrderByStartAsc(
                             item.getId(),
                             Status.APPROVED,
                             LocalDateTime.now()
-                    );
-                    if (!futureBookings.isEmpty()) {
-                        Booking nextBooking = futureBookings.get(0);
+                    ).ifPresent(nextBooking -> {
                         if (nextBooking.getStart().isAfter(LocalDateTime.now())) {
                             item.setNextBooking(nextBooking.getStart());
                         }
-                    }
+                    });
 
                     return itemMapper.toDtoOwner(item);
                 })
