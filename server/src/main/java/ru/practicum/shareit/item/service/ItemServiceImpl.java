@@ -43,15 +43,18 @@ public class ItemServiceImpl implements ItemService {
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
         Item item = itemMapper.toEntity(createItemRequest, owner);
 
+        Item savedItem = itemRepository.save(item);
+        log.info("Создана вещь с id: {} для пользователя с id: {}", savedItem.getId(), userId);
+
         if (createItemRequest.getRequestId() != null) {
             ItemRequest request = requestRepository.findById(createItemRequest.getRequestId())
                     .orElseThrow(() -> new NotFoundException("Данного запроса не существует"));
             log.info("Вещь создана в ответ на запрос с id={}", createItemRequest.getRequestId());
-            requestRepository.delete(request);
+
+            request.getResponses().add(savedItem);
+            requestRepository.save(request);
         }
 
-        Item savedItem = itemRepository.save(item);
-        log.info("Создана вещь с id: {} для пользователя с id: {}", savedItem.getId(), userId);
         return itemMapper.toDto(savedItem);
     }
 
@@ -104,6 +107,23 @@ public class ItemServiceImpl implements ItemService {
     public OwnerItemDto findById(Long id) {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Вещь с id " + id + " не найдена"));
+
+        bookingRepository.findFirstByItem_IdAndStatusAndEndBeforeOrderByEndDesc(
+                id,
+                Status.APPROVED,
+                LocalDateTime.now()
+        ).ifPresent(lastBooking -> item.setLastBooking(lastBooking.getEnd()));
+
+        bookingRepository.findFirstByItem_IdAndStatusAndStartAfterOrderByStartAsc(
+                id,
+                Status.APPROVED,
+                LocalDateTime.now()
+        ).ifPresent(nextBooking -> {
+            if (nextBooking.getStart().isAfter(LocalDateTime.now())) {
+                item.setNextBooking(nextBooking.getStart());
+            }
+        });
+
         return itemMapper.toDtoOwner(item);
     }
 
@@ -121,11 +141,17 @@ public class ItemServiceImpl implements ItemService {
                             LocalDateTime.now()
                     ).ifPresent(lastBooking -> item.setLastBooking(lastBooking.getEnd()));
 
-                    bookingRepository.findFirstByItem_IdAndStatusAndStartAfterOrderByStartAsc(
+                    List<Booking> futureBookings = bookingRepository.findAllByItem_IdAndStatusAndStartAfterOrderByStartAsc(
                             item.getId(),
                             Status.APPROVED,
                             LocalDateTime.now()
-                    ).ifPresent(nextBooking -> item.setNextBooking(nextBooking.getStart()));
+                    );
+                    if (!futureBookings.isEmpty()) {
+                        Booking nextBooking = futureBookings.get(0);
+                        if (nextBooking.getStart().isAfter(LocalDateTime.now())) {
+                            item.setNextBooking(nextBooking.getStart());
+                        }
+                    }
 
                     return itemMapper.toDtoOwner(item);
                 })

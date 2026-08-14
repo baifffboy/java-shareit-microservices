@@ -11,5 +11,5 @@ public class RequestDto {
     private Long id;
     private String description;
     private LocalDateTime created;
-    private List<ItemShortDto> responses;
+    private List<ItemShortDto> items;
 }
