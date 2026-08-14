@@ -19,7 +19,6 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.service.ItemServiceImpl;
-import ru.practicum.shareit.request.repository.RequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -46,9 +45,6 @@ class ItemServiceImplTest {
 
     @Mock
     private BookingRepository bookingRepository;
-
-    @Mock
-    private RequestRepository requestRepository;
 
     @Mock
     private ItemMapper itemMapper;

@@ -31,7 +31,6 @@ class ItemMapperTest {
 
     @BeforeEach
     void setUp() {
-        // Создаем ItemMapperImpl вручную и внедряем commentMapper через рефлексию
         ItemMapperImpl mapperImpl = new ItemMapperImpl();
         try {
             var field = ItemMapperImpl.class.getDeclaredField("commentMapper");
@@ -69,7 +68,6 @@ class ItemMapperTest {
         item.setLastBooking(LocalDateTime.now().minusDays(1));
         item.setNextBooking(LocalDateTime.now().plusDays(1));
 
-        // Используем lenient() чтобы избежать UnnecessaryStubbingException
         lenient().when(commentMapper.toDto(any(Comment.class))).thenReturn(commentDto);
     }
 
