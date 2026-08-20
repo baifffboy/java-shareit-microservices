@@ -1,13 +1,13 @@
 package ru.practicum.shareit.request.dto;
 
 import lombok.Data;
-import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.user.dto.UserDto;
 
 @Data
 public class UpdateRequest {
     private Long id;
-    private Item request;
+    private ItemDto request;
     private boolean status;
-    private User requestUser;
+    private UserDto requestUser;
 }
